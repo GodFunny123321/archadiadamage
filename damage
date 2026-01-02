@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Calcolo Danno Item Archadia</title>
+
+<style>
+  /* ---- FONT & RESET ---- */
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html,body {
+    height:100%;
+    font-family: 'Poppins', sans-serif;
+    background: radial-gradient(circle at top, #111827 0, #020617 45%, #020617 100%);
+    color:#eef2f7;
+  }
+
+  .container {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:30px 16px 40px;
+    max-width:920px;
+    margin:auto;
+  }
+
+  h1 {
+    font-size:2.1rem;
+    font-weight:700;
+    margin-bottom:6px;
+    text-align:center;
+  }
+  .subtitle {
+    font-size:0.95rem;
+    color:#b3bac5;
+    margin-bottom:24px;
+    text-align:center;
+  }
+
+  .form-card {
+    width:100%;
+    background: linear-gradient(135deg, #141829, #070b14);
+    padding:24px 26px 22px;
+    border-radius:20px;
+    box-shadow:
+      0 18px 45px rgba(0,0,0,0.75),
+      0 0 0 1px rgba(148,163,184,0.08);
+    position:relative;
+    overflow:hidden;
+  }
+
+  .form-card::before {
+    content:"";
+    position:absolute;
+    inset:-40%;
+    background: radial-gradient(circle at 10% 0, rgba(56,189,248,0.07), transparent 55%),
+                radial-gradient(circle at 90% 0, rgba(129,140,248,0.08), transparent 55%);
+    opacity:0.9;
+    pointer-events:none;
+  }
+
+  .form-inner {
+    position:relative;
+    z-index:1;
+  }
+
+  .form-row {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+    gap:12px 16px;
+    margin-bottom:18px;
+  }
+
+  .form-row-inline {
+    display:grid;
+    grid-template-columns:minmax(0,260px) minmax(0,1fr);
+    gap:18px;
+    align-items:flex-start;
+    margin-bottom:10px;
+  }
+
+  label {
+    font-size:0.8rem;
+    margin-bottom:5px;
+    font-weight:500;
+  }
+
+  input,select,textarea {
+    background:#0b1020;
+    border:1px solid #1f2937;
+    border-radius:12px;
+    padding:8px 10px;
+    font-size:0.9rem;
+    color:#eef2f7;
+    transition:0.25s;
+    width:100%;
+  }
+
+  input:focus,select:focus,textarea:focus {
+    border-color:#60a5fa;
+    outline:none;
+    box-shadow:0 0 0 1px rgba(96,165,250,0.6);
+  }
+
+  textarea { resize:vertical; min-height:64px; }
+
+  .btn {
+    width:100%;
+    background: linear-gradient(90deg,#60a5fa,#4f46e5);
+    border:none;
+    padding:12px 0;
+    border-radius:999px;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+    color:#0b1020;
+    transition:0.25s;
+    margin-top:12px;
+  }
+
+  .btn:hover {
+    filter:brightness(1.08);
+    transform:translateY(-1px);
+    box-shadow:0 10px 25px rgba(37,99,235,0.45);
+  }
+
+  .error {
+    color:#f97373;
+    margin-top:8px;
+    font-size:0.83rem;
+    text-align:center;
+  }
+
+  /* ---- RESULT CARD ---- */
+  #result {
+    width:100%;
+    margin-top:26px;
+    background: radial-gradient(circle at top left,#111827,#020617 55%);
+    border-radius:18px;
+    padding:18px 20px 16px;
+    box-shadow:
+      0 16px 40px rgba(0,0,0,0.75),
+      0 0 0 1px rgba(30,64,175,0.45);
+    opacity:0;
+    transform:translateY(14px);
+    transition:0.35s ease;
+    display:none;
+  }
+
+  #result.visible {
+    display:block;
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .result-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+
+  .result-tag {
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid rgba(129,140,248,0.7);
+    background:rgba(15,23,42,0.8);
+  }
+
+  .damage-value {
+    font-size:1.9rem;
+    font-weight:700;
+    background:linear-gradient(120deg,#facc15,#fb923c,#f97316);
+    -webkit-background-clip:text;
+    color:transparent;
+    text-shadow:0 0 18px rgba(249,115,22,0.45);
+  }
+
+  .damage-sub {
+    font-size:0.8rem;
+    color:#9ca3af;
+  }
+
+  .chip-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:10px;
+  }
+
+  .chip {
+    font-size:0.78rem;
+    padding:4px 9px;
+    border-radius:999px;
+    background:rgba(15,23,42,0.95);
+    border:1px solid rgba(148,163,184,0.5);
+  }
+
+  .result-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:10px 14px;
+    font-size:0.85rem;
+    margin-top:4px;
+  }
+
+  .result-block-title {
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:#9ca3af;
+    margin-bottom:3px;
+  }
+
+  .result-block-body {
+    font-size:0.84rem;
+    line-height:1.4;
+  }
+
+  .footer {
+    margin-top:30px;
+    font-size:0.78rem;
+    color:#9ca3af;
+    text-align:center;
+  }
+
+  @media (max-width: 640px) {
+    .form-card { padding:20px 18px 18px; }
+    .form-row-inline {
+      grid-template-columns:1fr;
+    }
+    #result { padding:16px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>Calcolo Danno Martello</h1>
+  <div class="subtitle">
+    UI moderna per calcolare danno su server Minecraft — con parsing scaling custom.
+  </div>
+
+  <div class="form-card">
+    <div class="form-inner">
+      <form id="dmgForm">
+
+        <!-- riga stat -->
+        <div class="form-row">
+          <div>
+            <label>Forza</label>
+            <input type="number" id="forza" value="50">
+          </div>
+          <div>
+            <label>Destrezza</label>
+            <input type="number" id="dest" value="20">
+          </div>
+          <div>
+            <label>Intelligenza</label>
+            <input type="number" id="intel" value="20">
+          </div>
+          <div>
+            <label>Costituzione</label>
+            <input type="number" id="cost" value="20">
+          </div>
+          <div>
+            <label>Arcano</label>
+            <input type="number" id="arcano" value="0">
+          </div>
+          <div>
+            <label>Danno Base</label>
+            <input type="number" id="dannoBase" value="100">
+          </div>
+        </div>
+
+        <!-- riga scaling + custom -->
+        <div class="form-row-inline">
+          <div>
+            <label>Tipo di Scaling</label>
+            <select id="scalingMode">
+              <option value="kosh">Kosh</option>
+              <option value="beacon">Beacon</option>
+              <option value="customNumber">Custom Numerico</option>
+              <option value="customFormula">Formula damage{...}</option>
+            </select>
+          </div>
+          <div>
+            <label>Input Custom</label>
+            <textarea id="customFormula" rows="3"
+placeholder="Esempio formula:
+damage{amount=( <caster.damage> + (<caster.damage>*(&lt;caster.var.str&gt;*0.05)) + ... );...}">
+            </textarea>
+          </div>
+        </div>
+
+        <button class="btn" type="submit">Calcola Danno</button>
+        <div id="error" class="error"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="footer">
+    tutti i calcoli sono stati svolti da GodFurryGr @firegr su telegram
+  </div>
+
+</div>
+
+<script>
+  function parseScalingFromFormula(text, stats){
+    if(!text) return {ok:false};
+    const regex = /<caster\.var\.(\w+)>\s*\*\s*([0-9]*\.?[0-9]+)/gi;
+    let match,sum=0;
+    while((match=regex.exec(text.toLowerCase()))){
+      const n=match[1],c=parseFloat(match[2]);
+      if(n.includes("str"))             sum+=c*stats.forza;
+      else if(n.includes("dest")||n.includes("dex")) sum+=c*stats.dest;
+      else if(n.includes("int"))       sum+=c*stats.intel;
+      else if(n.includes("cost")||n.includes("con")) sum+=c*stats.cost;
+      else if(n.includes("arc"))       sum+=c*stats.arcano;
+    }
+    return sum ? {ok:true, scaling:1+sum} : {ok:false};
+  }
+
+  function calcola(F,D,I,C,A,B,mode,custom){
+    const a0=2.44993606,
+          a1=2.17544583e-2,
+          a2=3.62729041e-3,
+          a3=-1.27153297e-7,
+          a4=-3.31960696e-7,
+          a5=5.45301170e-5;
+    let scaling=1, scalingLabel="";
+    if(mode==="kosh"){
+      scaling=1+0.07*D+0.115*I;
+      scalingLabel="Kosh";
+    } else if(mode==="beacon"){
+      scaling=17+17*I*0.135;
+      scalingLabel="Beacon";
+    } else if(mode==="customNumber"){
+      scaling=parseFloat(custom)||1;
+      scalingLabel="Custom numerico";
+    } else {
+      const r=parseScalingFromFormula(custom,{forza:F,dest:D,intel:I,cost:C,arcano:A});
+      if(!r.ok) throw "Formula custom non valida";
+      scaling=r.scaling;
+      scalingLabel="Formula damage{...}";
+    }
+    const ratio=a0+a1*F+a2*D+a3*(F**2)+a4*(D**2)+a5*(F*D);
+    return {dmg:B*scaling*ratio,scaling,scalingLabel};
+  }
+
+  document.getElementById("dmgForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    const F=+forza.value,
+          D=+dest.value,
+          I=+intel.value,
+          C=+cost.value,
+          A=+arcano.value,
+          B=+dannoBase.value;
+    const mode=scalingMode.value,
+          custom=customFormula.value.trim();
+    const errorBox=document.getElementById("error"),
+          out=document.getElementById("result");
+    errorBox.textContent="";
+    out.classList.remove("visible");
+
+    try{
+      const r=calcola(F,D,I,C,A,B,mode,custom);
+
+      const chips = [
+        `F: ${F}`, `D: ${D}`, `Int: ${I}`,
+        `Cost: ${C}`, `Arc: ${A}`
+      ].map(c => `<span class="chip">${c}</span>`).join(" ");
+
+      out.innerHTML = `
+        <div class="result-header">
+          <div>
+            <div class="result-tag">DANNO TOTALE</div>
+            <div class="damage-sub">calcolato in base alle stat attuali</div>
+          </div>
+          <div class="damage-value">${r.dmg.toFixed(2)}</div>
+        </div>
+
+        <div class="chip-row">
+          ${chips}
+          <span class="chip">Base: ${B.toFixed(2)}</span>
+        </div>
+
+        <div class="result-grid">
+          <div>
+            <div class="result-block-title">SCALING</div>
+            <div class="result-block-body">
+              modalità: ${r.scalingLabel}<br>
+              valore: ${r.scaling.toFixed(4)}
+            </div>
+          </div>
+          <div>
+            <div class="result-block-title">NOTE</div>
+            <div class="result-block-body">
+              Il danno è stato calcolato usando lo scaling selezionato e le tue statistiche correnti.
+            </div>
+          </div>
+        </div>
+      `;
+
+      out.style.display="block";
+      out.classList.add("visible");
+    }catch(err){
+      errorBox.textContent = err;
+      out.style.display="none";
+    }
+  });
+</script>
+
+</body>
+</html>
